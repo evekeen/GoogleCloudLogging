@@ -302,14 +302,10 @@ public struct GoogleCloudLogHandler: LogHandler {
     
     
     static func uploadOnSchedule() {
-        
-        logger.debug("Start uploading logs")
-        
         fileHandleQueue.async {
             do {
                 let fileHandle = try FileHandle(forReadingFrom: logFile)
                 guard let data = try fileHandle.legacyReadToEnd(), !data.isEmpty else {
-                    logger.debug("No logs to upload")
                     return
                 }
                 
@@ -355,7 +351,6 @@ public struct GoogleCloudLogHandler: LogHandler {
                 func deleteOldEntries() {
                     do {
                         try (fileHandle.legacyReadToEnd() ?? Data()).write(to: logFile, options: .atomic)
-                        logger.debug("Uploaded logs have been deleted")
                     } catch {
                         logger.error("Unable to delete uploaded logs", metadata: [MetadataKey.error: "\(error)"])
                     }
@@ -370,9 +365,6 @@ public struct GoogleCloudLogHandler: LogHandler {
                                 lines.append(data)
                             }
                             try Data(lines.joined(separator: [.newline])).write(to: logFile, options: .atomic)
-                            logger.debug("Overflowed or expired logs have been deleted")
-                        } else {
-                            logger.debug("No overflowed or expired logs to delete")
                         }
                     } catch {
                         logger.error("Unable to delete overflowed or expired logs", metadata: [MetadataKey.error: "\(error)"])
@@ -389,7 +381,6 @@ public struct GoogleCloudLogHandler: LogHandler {
                     fileHandleQueue.async {
                         switch result {
                         case .success:
-                            logger.info("Logs have been uploaded")
                             deleteOldEntries()
                         case .failure(let error):
                             switch error {
